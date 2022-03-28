@@ -1,2 +1,2 @@
-# Sonic3AIRPong
-Pong in Sonic 3 A.I.R.
+# Sonic 3 A.I.R. Pong
+Pong mod created for Sonic 3 A.I.R.
