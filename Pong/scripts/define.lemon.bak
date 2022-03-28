@@ -1,0 +1,148 @@
+//	-	Variables	-
+// Keeps track of menus. Set to 0 when it boots up the Data Select.
+global u8 menuScreen = 0
+
+// Some variables are defined for this script.
+
+// Game Class
+global u8		Game.BallType
+global bool		Game.Holds				= true
+global u8		Game.MenuSelect
+global u8		Game.Mode
+global bool		Game.Paused
+global u8		Game.SettingMenu
+global bool		Game.SettingMenuLock
+global u8		Game.State
+global u8		Game.WinsRequired		= 3
+
+global u8		Game.ButtonTurbo		= 0x40
+global u8		Game.ButtonHold			= 0x40
+global bool		Game.HoldInvert			= false
+
+global u8		Game.SquidGameSecret	= false // hi jack
+
+constant u8		Game.State_Menu			= 0x00
+constant u8		Game.State_Settings		= 0x01
+constant u8		Game.State_StatsCredits	= 0x02
+constant u8		Game.State_Achievements	= 0x03
+constant u8		Game.State_Game			= 0x04
+
+constant u8		Game.Mode_2P			= 0x00
+constant u8		Game.Mode_AI			= 0x01
+constant u8		Game.Mode_ENDLESS		= 0x02
+
+constant array<string> SETTINGS_STRING =
+{
+	// Settings
+	"Gameplay", "Modifiers", "Controls"
+}
+
+constant array<string> GAMEMODE_SELECT_STRING =
+{
+	// Gamemodes
+	"Vs. 2P", "Vs. AI", "Endless"
+}
+
+function string returnControlString(u8 control)
+{
+	if (control == 0x01)
+		return "UP"
+	else if (control == 0x02)
+		return "DOWN"
+	else if (control == 0x04)
+		return "LEFT"
+	else if (control == 0x08)
+		return "RIGHT"
+	else if (control == 0x10)
+		return "B"
+	else if (control == 0x20)
+		return "C"
+	else if (control == 0x40)
+		return "A"
+	else if (control == 0xa0)
+		return "Waiting For Input"
+
+	return ""
+}
+
+// Gameplay Class
+global u8		Gameplay.bgGlow
+global u16		Gameplay.TrackHits
+global u16		Gameplay.TrackHitsTotal
+
+constant array<string> GAMEPLAY_BALL_SELECT_STRING =
+{
+	// Balls
+	"Regular", "Iron", "Omega"
+}
+
+constant array<string> GAMEPLAY_BALL_EXTENSION_STRING =
+{
+	// Balls
+	"", "_iron", "_omega"
+}
+
+constant array<u8> GAMEPLAY_BALL_HEIGHT_VAL =
+{
+	// Balls
+	5, 10, 66
+}
+
+constant array<u8> GAMEPLAY_BALL_VERT_VAL =
+{
+	// Balls
+	17, 18, 55
+}
+
+constant array<u8> GAMEPLAY_BALL_FURTHENMOST_VAL =
+{
+	// Balls
+	26, 33, 86
+}
+
+constant array<u8> GAMEPLAY_BALL_VEL_PEN_VAL =
+{
+	// Balls
+	0, 1, 10
+}
+
+// Pong Class
+global bool		Pong.P1.Hold
+global bool		Pong.P2.Hold
+global u8		Pong.P1.Wins
+global u8		Pong.P2.Wins
+global s16		Pong.P1.Y
+global s16		Pong.P2.Y
+
+// Ball Class
+global u16		Ball.Intensity
+global bool		Ball.Hold
+global s8		Ball.HoldTimer
+global u16		Ball.X
+global s16		Ball.Y
+global s16		Ball.Xspeed
+global s16		Ball.Yspeed
+global bool		Ball.X.Dir				= false
+global bool		Ball.Y.Dir				= false
+
+// AI Class
+global u8		AI.difficulty			= 5
+
+global u8		AI.closenessValue
+global u8		AI.closenessValueMaxSpeed
+global bool		AI.grandMaster
+global u8		AI.reactionTime
+global u8		AI.reactionTimeInGame
+global bool		AI.returnCenter
+global u8		AI.speed
+global bool		AI.useHold
+global u8		AI.useHoldChance
+global u8		AI.useHoldWait
+global u8		AI.useHoldWaitInGame
+global bool		AI.useSpeed
+global u8		AI.useSpeedTime
+
+// Sound Class
+constant u8		PONG_HOLD				= 0x76
+constant u8		PONG_BOING				= 0xAA
+constant u8		PONG_PAUSE				= 0xB5

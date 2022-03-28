@@ -1,0 +1,61 @@
+// Where most of the magic happens. Dreams do indeed come true!
+function void pongMenu.update()
+{
+	Ball.X = getScreenWidth() / 2
+	Ball.Y = getScreenHeight() / 2
+
+	Pong.P1.Y = getScreenHeight() / 2
+	Pong.P2.Y = getScreenHeight() / 2
+
+	playMusic(0x2d)
+	FadeOutScreenBlocking()
+	while (true)
+	{
+		// Some stuff I don't know about, do not delete.
+		FadeInFromWhite()
+
+		waitForNextFrame()
+	@EntryPoint:
+
+		// Reset sprites so they go away. Last time I didn't use this it reached the sprite limit.
+		Renderer.resetSprites()
+
+		// Render background.
+		DataSelect.drawCustomPlanes()
+
+		++level.framecounter
+		// ---------------
+		// Recommended to leave the code above alone unless you have a good reason to do so.
+		// ---------------
+
+		// To keep code clean, I'm putting all logic in here. Do however you want though!
+		Pong.mainLogicLoop()
+
+		// These two if condtions allow exiting to differnt locations.
+		// It is recommended to put one of these somewhere in your scripts so players do not get soft-locked.
+		
+		/*
+			By the way, there are more premade load calls available for usage. See scripts/loadCall.lemon for more details.
+		*/
+
+		// Discord RPC
+		{
+			if (Game.State == Game.State_Game)
+			{
+				if (Game.Mode == Game.Mode_ENDLESS)
+					Game.setDiscordDetails(stringformat("Endless - %d Hits", Gameplay.TrackHits))
+				else
+					Game.setDiscordDetails(stringformat("%s - %d / %d", GAMEMODE_SELECT_STRING[Game.Mode], Pong.P1.Wins, Pong.P2.Wins))
+				Game.setDiscordLargeImage("sonic3air")
+			}
+			else
+			{
+				Game.setDiscordDetails("In the Menus")
+				Game.setDiscordLargeImage("menus")
+			}
+
+			Game.setDiscordState("Playing Sonic 3 A.I.R. Pong")
+			Game.setDiscordSmallImage("character_unknown")
+		}
+	}
+}

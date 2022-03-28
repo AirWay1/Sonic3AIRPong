@@ -1,0 +1,47 @@
+// Load up our own custom menu instead of the Data Select by overwriting this script with our own code.
+function void EntryFunctions.dataSelect()
+{
+	yieldExecution()
+
+	EntryFunctions.sharedInit()
+	System.setupCallFrame("GameModeControlLoop", "@EntryPoint")
+	
+	// Loadup the custom menu. Usually "loadupDataSelect".
+	System.setupCallFrame("loadupPongMenu")
+}
+
+// Setup custom menu.
+function void loadupPongMenu()
+{	
+	// Setup variable to be this value, just in case.
+	menuScreen = 1
+
+	// Go to our custom menu.
+	global.game_mode = 0x0c
+	customMenu.setup()
+	Menu.FadeInAfterInit()
+
+	customMenu.update()
+}
+
+// Modified data select code to remove some stuff but still keep the good ol' rendering.
+function void pongMenu.setup()
+{
+	VDP.Config.setActiveDisplay(false)
+	fn0011ca()
+
+	VDP.Config.setActiveDisplay(true)
+	zeroMemory(0xffffac00, 0x400)
+	zeroMemory(0xffffb000, 0x2000)
+
+	VDP.Config.enableHInt(false)
+	VDP.Config.setNameTableBasePlaneA(0xe000)
+	VDP.Config.setNameTableBasePlaneB(0xc000)
+	VDP.Config.setNameTableBasePlaneW(0xe000)
+
+	VDP.Config.setVerticalScrolling(false, 0)	// Horizontal scrolling mode without scroll mask
+	VDP.Config.setRenderingModeConfiguration(false)
+	VDP.Config.setPlayfieldSizeInPixels(1024, 256)
+
+	level.framecounter = 0
+}

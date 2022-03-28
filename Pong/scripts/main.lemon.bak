@@ -1,0 +1,175 @@
+//	-	Inclusions	-
+include framework/?
+include pong/?
+include define
+include util
+
+global u8 countApart
+
+//	-	-	-	-	-
+
+function s16 returnYSpeed()
+{
+	return ((Ball.Y.Dir) ? -Ball.Yspeed : Ball.Yspeed)
+}
+
+//	-	-	-	-	-
+
+// Fun fact. "bg_dataselect does not work for some reason, so I used a new sprite defined as "custom_background".
+function void DataSelect.drawCustomPlanes()
+{
+	// Check for the screen the menu is on.
+	if (menuScreen == 1)
+	{
+		// If you are wondering why I didn't do CustomMenu.drawCustomPlanes() it didn't load quite as fast as I would like it to.
+
+		u8 fadeEffect = 0x77 + Gameplay.bgGlow
+		if ((Gameplay.bgGlow > 0) && (!Game.Paused))
+			Gameplay.bgGlow--
+
+		// Render the custom background.
+		if (Game.SquidGameSecret)
+			Renderer.drawCustomSprite("squid_games", getScreenExtend() - 40, 0, 0x00, 0, 0x3000, 0, fadeEffect)
+		else
+			Renderer.drawCustomSprite("custom_background", getScreenExtend() - 40, 0, 0x00, 0, 0x3000, 0, fadeEffect)
+	}
+	else
+	{
+		// Call the base Data Select background script. Useful for mod compatibility with custom Data Select menus.
+		base.DataSelect.drawCustomPlanes()
+	}
+}
+
+function void writeDisplay(u8 display_1)
+{
+	System.writeDisplayLine(stringformat("%x", display_1))
+}
+
+function void writeDisplay(u16 display_1)
+{
+	System.writeDisplayLine(stringformat("%x", display_1))
+}
+
+function void writeDisplay(u32 display_1)
+{
+	System.writeDisplayLine(stringformat("%x", display_1))
+}
+
+function void writeDisplay(u64 display_1)
+{
+	System.writeDisplayLine(stringformat("%x", display_1))
+}
+
+function void writeDisplay(s8 display_1)
+{
+	System.writeDisplayLine(stringformat("%x", display_1))
+}
+
+function void writeDisplay(s16 display_1)
+{
+	System.writeDisplayLine(stringformat("%x", display_1))
+}
+
+function void writeDisplay(s32 display_1)
+{
+	System.writeDisplayLine(stringformat("%x", display_1))
+}
+
+function void writeDisplay(s64 display_1)
+{
+	System.writeDisplayLine(stringformat("%x", display_1))
+}
+
+function u8 Menu.settingCounter(s8 min, u8 max, u8 count, bool shouldCancel)
+{
+	if (Game.SettingMenuLock)
+		return count
+	if (shouldCancel)
+	{
+		if ((control.pad1.pressed & CONTROL_LEFT) || (control.pad1.pressed & CONTROL_RIGHT))
+			playSound(0xb2)
+		return count
+	}
+
+	u8 backupCount = count
+	// I honestly have no idea why I have to keep the { } because I love optimization, but hey it works.
+	if (control.pad1.pressed & CONTROL_LEFT)
+	{
+		if (count != min)
+			count--
+	}
+	else if (control.pad1.pressed & CONTROL_RIGHT)
+		if (count != max)
+			count++
+	
+	if (backupCount != count)
+		playSound(0x5b)
+	
+	return count
+}
+
+function void Pong.menuHandler(u8 max)
+{
+	if (Game.SettingMenuLock)
+		return
+	if (control.pad1.pressed & CONTROL_DOWN)
+	{
+		if (Game.MenuSelect != max)
+		{
+			playSound(0x5b)
+			Game.MenuSelect++
+		}
+	}
+	else if (control.pad1.pressed & CONTROL_UP)
+		if (Game.MenuSelect != 0)
+		{
+			playSound(0x5b)
+			Game.MenuSelect--
+		}
+}
+
+function void Renderer.pong.drawMenu(u8 count, string text, bool isGray)
+{
+	u32 color = 0xffffffff
+	if (isGray)
+		color = 0xaaaaaaff
+	else if (Game.MenuSelect == count)
+		color = 0xffff00ff
+	
+	Renderer.drawText("sonic3_fontB", getScreenWidth() / 2, 50 + (count * 12), ((Game.MenuSelect == count) ? stringformat("* %s *", text) : text), color, 2, 0, 0xf100, false)
+}
+
+function void Renderer.pong.drawCredit(u8 count, string text)
+{
+	Renderer.drawText("sonic3_fontB", getScreenWidth() / 2, 55 + (count * 8), text, 0xffffffff, 2, 0, 0xf100, false)
+}
+
+function void Renderer.pong.drawStat(u8 count, string text)
+{
+	Renderer.drawText("sonic3_fontB", getScreenWidth() / 2 - 100, 50 + (count * 8), text, 0xffffffff, 1, 0, 0xf100, false)
+}
+
+function void Renderer.pong.drawAchievement(u8 count, string text, bool isGray)
+{
+	u32 color = 0xffffffff
+	if (isGray)
+		color = 0xaaaaaaff
+	else if (Game.MenuSelect == count)
+		color = 0xffff00ff
+	Renderer.drawText("sonic3_fontB", getScreenWidth() / 2 - 100, 50 + (count * 8), ((Game.MenuSelect == count) ? stringformat("* %s *", text) : text), color, 1, 0, 0xf100, false)
+}
+
+function void Renderer.pong.drawTitle()
+{
+	s16 posX = (level.framecounter / 2 % 120) - 120
+	for (u16 i = 0; i != 6; i++)
+		Renderer.drawText("oxyfont_regular", (posX) + (i * 120), 20, "Sonic 3 A.I.R. Pong", 0xffffffff, 2, 0, 0xf100, false)
+}
+
+function void Renderer.pong.drawBoostBar(bool isSecondPlayer)
+{
+	s16 xPos = ((isSecondPlayer) ? getScreenWidth() - 40 : 40)
+	s16 yPos = ((isSecondPlayer) ? Pong.P2.Y : Pong.P1.Y)
+	for (u16 i = 0; i != Ball.HoldTimer; i++)
+		Renderer.drawCustomSprite(((i <= 4) ? "pong_hold_0" : (i <= 10) ? "pong_hold_1" : (i <= 18) ? "pong_hold_2" : "pong_hold_3"), xPos, yPos + 9 - i, 0x00, 0, 0xf000)
+}

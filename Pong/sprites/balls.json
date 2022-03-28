@@ -1,0 +1,5 @@
+{
+	"pong_ball":		{ "File": "balls/reg.png", "Rect":"0,0,10,10",   "Center": "5,5" },
+	"pong_ball_iron":	{ "File": "balls/iron.png", "Rect":"0,0,18,18",   "Center": "9,9" },
+	"pong_ball_omega":	{ "File": "balls/omega.png", "Rect":"0,0,130,130",   "Center": "65,65" }
+}

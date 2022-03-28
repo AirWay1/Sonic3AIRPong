@@ -1,0 +1,5 @@
+function u32 utilPong.getRandom()
+{
+	// random but not random lol
+	return level.framecounter + control.pad1.state + control.pad2.state + Pong.P1.Y + Pong.P2.Y + Ball.X + Ball.Y + Ball.Xspeed + Ball.Yspeed
+}

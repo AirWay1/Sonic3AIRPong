@@ -1,0 +1,117 @@
+function void Pong.AI.Settings()
+{
+	AI.closenessValue = 16
+	AI.closenessValueMaxSpeed = 4
+	AI.grandMaster = false
+	AI.reactionTime = 20
+	AI.returnCenter = false
+	AI.speed = 1
+	AI.useHold = false
+	AI.useHoldChance = 15
+	AI.useHoldWait = 10
+	AI.useSpeed = false
+	AI.useSpeedTime = 18
+
+	if (AI.difficulty == 2)			// AI 2
+	{
+		AI.closenessValue = 13
+		AI.closenessValueMaxSpeed = 4
+		AI.reactionTime = 17
+	}
+	else if (AI.difficulty == 3)	// AI 3
+	{
+		AI.closenessValue = 11
+		AI.closenessValueMaxSpeed = 4
+		AI.reactionTime = 15
+		AI.speed = 2
+	}
+	else if (AI.difficulty == 4)	// AI 4
+	{
+		AI.closenessValue = 9
+		AI.closenessValueMaxSpeed = 4
+		AI.reactionTime = 13
+		AI.speed = 2
+	}
+	else if (AI.difficulty == 5)	// AI 5
+	{
+		AI.closenessValue = 11
+		AI.closenessValueMaxSpeed = 15
+		AI.reactionTime = 14
+		AI.speed = 2
+		AI.useSpeed = true
+		AI.useSpeedTime = 30
+	}
+	else if (AI.difficulty == 6)	// AI 6
+	{
+		AI.closenessValue = 9
+		AI.closenessValueMaxSpeed = 13
+		AI.reactionTime = 12
+		AI.speed = 2
+		AI.useSpeed = true
+		AI.useSpeedTime = 22
+	}
+	else if (AI.difficulty == 7)	// AI 7
+	{
+		AI.closenessValue = 8
+		AI.closenessValueMaxSpeed = 12
+		AI.reactionTime = 10
+		AI.returnCenter = true
+		AI.speed = 2
+		AI.useSpeed = true
+		AI.useSpeedTime = 17
+	}
+	else if (AI.difficulty == 8)	// AI 8
+	{
+		AI.closenessValue = 7
+		AI.closenessValueMaxSpeed = 10
+		AI.reactionTime = 9
+		AI.returnCenter = true
+		AI.speed = 3
+		AI.useHold = true
+		// AI.useHoldChance = 15
+		// AI.useHoldWait = 15
+		AI.useSpeed = true
+		AI.useSpeedTime = 14
+	}
+	else if (AI.difficulty == 9)	// AI 9
+	{
+		AI.closenessValue = 6
+		AI.closenessValueMaxSpeed = 8
+		AI.reactionTime = 7
+		AI.returnCenter = true
+		AI.speed = 3
+		AI.useHold = true
+		AI.useHoldChance = 25
+		AI.useHoldWait = 8
+		AI.useSpeed = true
+		AI.useSpeedTime = 12
+	}
+	else if (AI.difficulty == 10)	// AI 10
+	{
+		AI.closenessValue = 4
+		AI.closenessValueMaxSpeed = 6
+		AI.grandMaster = true
+		AI.reactionTime = 5
+		AI.returnCenter = true
+		AI.speed = 3
+		AI.useHold = true
+		AI.useHoldChance = 40
+		AI.useHoldWait = 5
+		AI.useSpeed = true
+		AI.useSpeedTime = 9
+	}
+	else if (AI.difficulty == 11)	// oh no
+	{
+		AI.closenessValue = 2
+		AI.closenessValueMaxSpeed = 4
+		AI.grandMaster = true
+		AI.reactionTime = 3
+		AI.returnCenter = true
+		AI.speed = 5
+		AI.useHold = true
+		AI.useHoldChance = 60
+		AI.useHoldWait = 1
+		AI.useSpeed = true
+		AI.useSpeedTime = 4
+	}
+}
