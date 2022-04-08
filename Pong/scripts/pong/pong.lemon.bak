@@ -21,617 +21,99 @@ function void Pong.debugKeys()
 
 function void Pong.mainLogicLoop()
 {
+	debugLog(stringformat("%x", Game.State))
 	if (Game.State == Game.State_Menu)
 	{
-		Renderer.pong.drawMenu(0, "Start Game", false)
-		Renderer.pong.drawMenu(1, "Settings", false)
-		Renderer.pong.drawMenu(2, "Stats & Credits", false)
-		//Renderer.pong.drawMenu(3, "Achievements", false)
-		Renderer.pong.drawMenu(3, "Exit To A.I.R. Menu", false)
-
-		if (control.pad1.pressed & CONTROL_RIGHT)
-		{
-			countApart++
-			writeDisplay(countApart)
-		}
-		Pong.menuHandler(4)
-		if (control.pad1.pressed & CONTROL_A)
-		{
-			playSound(0x63)
-			if (Game.MenuSelect == 0)
-			{
-				Pong.AI.Settings()
-				Pong.resetVariables()
-
-				if (AI.grandMaster)
-					Audio.playAudio("16")
-				else
-					Audio.playAudio("1c")
-				Game.State = Game.State_Game
-			}
-			else if (Game.MenuSelect == 1)
-			{
-				Game.MenuSelect = 0
-				Game.State = Game.State_Settings
-			}
-			else if (Game.MenuSelect == 2)
-			{
-				Game.MenuSelect = 0
-				Game.State = Game.State_StatsCredits
-			}
-			/*else if (Game.MenuSelect == 3)
-			{
-				Game.MenuSelect = 0
-				Game.State = Game.State_Achievements
-			}*/
-			else if (Game.MenuSelect == 3)
-			{
-				// Fade out screen.
-				u32 backupA0 = A0
-				FadeOutScreenBlocking()
-				A0 = backupA0
-
-				// Return to Sonic 3 A.I.R. menu.
-				Game.returnToMainMenu()
-				yieldExecution()
-			}
-		}
+		menuPong.main()
 	}
 	else if (Game.State == Game.State_Settings)
 	{
-		bool buttonAInput = true
-		u8 settingMenuControl = (Game.Paused) ? 3 : 4
-		//SETTINGS_STRING
-
-		Renderer.pong.drawMenu(0, ((Game.Paused) ? "Pause Menu" : "Main Menu"), false)
-		if ((Game.MenuSelect == 1) && (!Game.Paused))
-				Game.SettingMenu = Menu.settingCounter(0, SETTINGS_STRING.length() - 1, Game.SettingMenu, false)
-
-		if (Game.Paused)
-			Game.SettingMenu = 2
+		if (!Game.Paused)
+			menuPong.settings()
 		else
-			Renderer.pong.drawMenu(1, stringformat("Category - %s", SETTINGS_STRING[Game.SettingMenu]), false)
-
-		if (Game.SettingMenu == 0)			// GAMEPLAY
-		{
-			Pong.menuHandler(3)
-			if (Game.MenuSelect == 2)
-				Game.Mode = Menu.settingCounter(0, GAMEMODE_SELECT_STRING.length() - 1, Game.Mode, false)
-			else if (Game.MenuSelect == 3)
-				AI.difficulty = Menu.settingCounter(1, 10, AI.difficulty, Game.Mode != Game.Mode_AI)
-
-			Renderer.pong.drawMenu(2, stringformat("Game Mode - %s", GAMEMODE_SELECT_STRING[Game.Mode]), false)
-			Renderer.pong.drawMenu(3, stringformat("AI Difficulty - %d", AI.difficulty), Game.Mode != Game.Mode_AI)
-		}
-		else if (Game.SettingMenu == 1)		// MODIFIERS
-		{
-			Pong.menuHandler(4)
-			if (Game.MenuSelect == 2)
-				Game.BallType = Menu.settingCounter(0, GAMEPLAY_BALL_SELECT_STRING.length() - 1, Game.BallType, false)
-			else if (Game.MenuSelect == 3)
-				Game.WinsRequired = Menu.settingCounter(1, 5, Game.WinsRequired, Game.Mode == Game.Mode_ENDLESS)
-			else if (Game.MenuSelect == 4)
-				Game.Holds = Menu.settingCounter(0, 1, Game.Holds, false)
-
-			Renderer.pong.drawMenu(2, stringformat("Ball Type - %s", GAMEPLAY_BALL_SELECT_STRING[Game.BallType]), false)
-			Renderer.pong.drawMenu(3, stringformat("Wins Required - %d", Game.WinsRequired), Game.Mode == Game.Mode_ENDLESS)
-			Renderer.pong.drawMenu(4, ((Game.Holds) ? "Holds Enabled" : "Holds Disabled"), false)
-		}
-		else if (Game.SettingMenu == 2)		// CONTROLS
-		{
-			Pong.controlsMenu(settingMenuControl)
-		}
-
-		if (Game.SettingMenuLock)
-		{
-			buttonAInput = false
-			if (Game.SettingMenu == 2)
-				if ((control.pad1.pressed != CONTROL_START) && (control.pad1.pressed != 0x00))
-					if (Game.MenuSelect == settingMenuControl - 2)
-					{
-						playSound(0x55)
-
-						Game.SettingMenuLock = false
-						Game.ButtonTurbo = control.pad1.pressed
-					}
-					else if (Game.MenuSelect == settingMenuControl - 1)
-					{
-						playSound(0x55)
-
-						Game.SettingMenuLock = false
-						Game.ButtonHold = control.pad1.pressed
-					}
-		}
-
-		if ((control.pad1.pressed & CONTROL_A) && (buttonAInput))
-		{
-			playSound(0x63)
-			if (Game.MenuSelect == 0)
-			{
-				if (Game.Paused)
-				{
-					Game.MenuSelect = 2
-					Game.State = Game.State_Game
-				}
-				else
-				{
-					Game.MenuSelect = 1
-					Game.State = Game.State_Menu
-				}
-			}
-			else if (Game.SettingMenu == 2)
-			{
-				if ((Game.MenuSelect >= settingMenuControl - 2) && (Game.MenuSelect < settingMenuControl))
-				{
-					Game.SettingMenuLock = true
-					if (Game.MenuSelect == settingMenuControl - 2)
-						Game.ButtonTurbo = 0xa0
-					else if (Game.MenuSelect == settingMenuControl - 1)
-						Game.ButtonHold = 0xa0
-				}
-			}
-		}
+			menuPong.settingsPaused()
 	}
-	else if (Game.State == Game.State_StatsCredits)
+	else if (Game.State == Game.State_Achievements)
 	{
-		bool hasUnlockedJackSecret = (Stat.getStat("Pong.aiStat") >= 10)
-
-		Renderer.pong.drawStat(0, stringformat("Ball Hits - %d", Stat.getStat("Pong.bStat")))
-		Renderer.pong.drawStat(1, stringformat("Ball Holds - %d", Stat.getStat("Pong.hStat")))
-		Renderer.pong.drawStat(2, stringformat("Highest AI Difficulty Beaten - %d", Stat.getStat("Pong.aiStat")))
-		Renderer.pong.drawStat(3, stringformat("Vs. AI Wins - %d", Stat.getStat("Pong.aiWinStat")))
-		Renderer.pong.drawStat(4, stringformat("Endless Highscore - %d", Stat.getStat("Pong.elesHighStat")))
-
-		if (hasUnlockedJackSecret)
-		{
-			Renderer.pong.drawCredit(6, "Congratulations for beating AI 10.")
-			Renderer.pong.drawCredit(7, "Press C for a secret.")
-		}
-
-		Renderer.pong.drawCredit(17, "Pong in Sonic 3 A.I.R. created by AirWay1")
-		Renderer.pong.drawCredit(19, "Regular & Iron ball sprites")
-		Renderer.pong.drawCredit(20, "Created by Bluestreak")
-
-		if (control.pad1.pressed & CONTROL_A)
-		{
-			playSound(0x63)
-
-			Game.MenuSelect = 2
-			Game.State = Game.State_Menu
-		}
-		else if ((control.pad1.pressed & CONTROL_C) && (hasUnlockedJackSecret))
-		{
-			Game.SquidGameSecret = true
-			playMusic(0x30)
-		}
+		menuPong.achievements()
 	}
-	/*else if (Game.State == Game.State_Achievements)
+	else if (Game.State == Game.State_Stats)
 	{
-		Renderer.pong.drawAchievement(0, "Played Pong", true)
-		if (control.pad1.pressed & CONTROL_A)
-		{
-			playSound(0x63)
-
-			Game.MenuSelect = 3
-			Game.State = Game.State_Menu
-		}
-	}*/
+		menuPong.stats()
+	}
+	else if (Game.State == Game.State_Credits)
+	{
+		menuPong.credits()
+	}
 	else if (Game.State == Game.State_Game)
 	{
-		Pong.debugKeys()
-
+		bool skipMenuLogic
 		if ((control.pad1.pressed & CONTROL_START) && (!Game.Paused))
 		{
+			skipMenuLogic = true
 			Game.Paused = true
 			Game.MenuSelect = 0
 
 			playSound(PONG_PAUSE)
 		}
 
+		Pong.debugKeys()
+
 		if (!Game.Paused)
 		{
-			Renderer.drawCustomSprite(stringformat("pong_ball%s", GAMEPLAY_BALL_EXTENSION_STRING[Game.BallType]), Ball.X, Ball.Y, 0x00, 0, 0xdf00, 0, 0x77)
+			if (!Game.Lite)
+				Renderer.drawCustomSprite(stringformat("pong_ball%s", GAMEPLAY_BALL_EXTENSION_STRING[Game.BallType]), Ball.X, Ball.Y, 0x00, 0, 0xdf00, 0, 0x77)
 			Pong.mainGameplay()
 		}
 		else
 		{
-			// Pause substate.
-			Pong.menuHandler(2)
-			
-			Renderer.pong.drawMenu(0, "Continue", false)
-			Renderer.pong.drawMenu(1, "Return to Main Menu", false)
-			Renderer.pong.drawMenu(2, "Options", false)
-			if (control.pad1.pressed & CONTROL_A)
-			{
-				if (Game.MenuSelect == 0)
-				{
-					playSound(0x63)
-					Game.Paused = false
-				}
-				else if (Game.MenuSelect == 1)
-				{
-					Game.Paused = false
-					Game.State = Game.State_Menu
-
-					playMusic(0x2d)
-				}
-				else if (Game.MenuSelect == 2)
-				{
-					Game.MenuSelect = 0
-					Game.State = Game.State_Settings
-				}
-			}
+			menuPong.pauseSubstate(skipMenuLogic)
 		}
 
-		// Wins
-		if (Game.Mode == Game.Mode_ENDLESS)
+		// Check for things like pause menu settings lol
+		if (Game.State == Game.State_Game)
 		{
-			Renderer.drawText("sonic3_fontB", getScreenWidth() / 2, 5, stringformat("%d Hits This Life", Gameplay.TrackHits), 0xffffffff, 2, 0, 0xf100, false)
-			Renderer.drawText("sonic3_fontB", getScreenWidth() / 2, 15, stringformat("Highscore - %d ", Stat.getStat("Pong.elesHighStat")), 0xffffffff, 2, 0, 0xf100, false)
+			// Wins
+			if (Game.Mode == Game.Mode_ENDLESS)
+			{
+				Renderer.drawText("sonic3_fontB", getScreenWidth() / 2, 5, stringformat("%d Hits This Life", Gameplay.TrackHits), 0xffffffff, 2, 0, 0xf100, false)
+				Renderer.drawText("sonic3_fontB", getScreenWidth() / 2, 15, stringformat("Highscore - %d ", Stat.getStat("Pong.elesHighStat")), 0xffffffff, 2, 0, 0xf100, false)
+			}
+			else
+				Renderer.drawText("sonic3_fontB", getScreenWidth() / 2, 5, stringformat("%d  -  %d", Pong.P1.Wins, Pong.P2.Wins), 0xffffffff, 2, 0, 0xf100, false)
 		}
-		else
-			Renderer.drawText("sonic3_fontB", getScreenWidth() / 2, 5, stringformat("%d  -  %d", Pong.P1.Wins, Pong.P2.Wins), 0xffffffff, 2, 0, 0xf100, false)
 	}
-	
+
 	if (Game.State != Game.State_Game)
 		Renderer.pong.drawTitle()
 
-	if (Game.Paused)
-		Renderer.drawCustomSprite("pause_overlay", getScreenExtend() - 40, 0, 0x00, 0, 0xe500, 0, 0x88)
-
-	// P1
-	Renderer.drawCustomSprite("pong_rod", 20, Pong.P1.Y, 0x00, 0, 0xe000)
-
-	// P2
-	if (Game.Mode == Game.Mode_ENDLESS)
-		Renderer.drawCustomSprite("the_wall", getScreenWidth() - 3, getScreenHeight() / 2, 0x00, 0, 0xe000)
-	else
-		Renderer.drawCustomSprite("pong_rod", getScreenWidth() - 20, Pong.P2.Y, 0x00, 0, 0xe000)
-
-	// Ball
-	Renderer.drawCustomSprite(stringformat("pong_ball%s", GAMEPLAY_BALL_EXTENSION_STRING[Game.BallType]), Ball.X, Ball.Y, 0x00, 0, 0xe000)
-
-	if ((Ball.Hold) && (Game.Holds))
+	/*
+		Remdering
+	*/
 	{
-		bool secondPlayer = (Ball.X > getScreenWidth() / 2)
-		Renderer.drawCustomSprite("pong_hold_bar", ((secondPlayer) ? getScreenWidth() - 40 : 40), ((secondPlayer) ? Pong.P2.Y : Pong.P1.Y), 0x00, 0, 0xf000)
-		Renderer.pong.drawBoostBar(secondPlayer)
-	}
-}
+		if ((Game.Paused) && (!Game.Lite))
+			Renderer.drawCustomSprite("pause_overlay", getScreenExtend() - 40, 0, 0x00, 0, 0xe500, 0, 0x88)
 
-//	-	-	-	-	-
-//	MAIN GAMEPLAY LOOP HERE
-//	-	-	-	-	-
+		// P1
+		Renderer.drawCustomSprite("pong_rod", 20, Pong.P1.Y, 0x00, 0, 0xe000)
 
-function void Pong.controlsMenu(u8 settingOffset)
-{
-	u8 ofset = settingOffset
-	Pong.menuHandler(ofset)
-
-	Renderer.pong.drawMenu(ofset - 2, stringformat("Turbo Rod Button - %s", returnControlString(Game.ButtonTurbo)), false)
-	Renderer.pong.drawMenu(ofset - 1, stringformat("Ball Hold Button - %s", returnControlString(Game.ButtonHold)), false)
-	Renderer.pong.drawMenu(ofset, ((Game.HoldInvert) ? "Inverted Hold Controls" : "Normal Hold Controls"), false)
-	if (Game.MenuSelect == ofset)
-		Game.HoldInvert = Menu.settingCounter(0, 1, Game.HoldInvert, false)
-}
-
-function void Pong.mainGameplay()
-{
-	Pong.P1.Hold = false
-	u8 movement.P1 = 2
-	if (control.pad1.state & Game.ButtonTurbo)
-		movement.P1 += 3
-	if (control.pad1.state & Game.ButtonHold)
-		Pong.P1.Hold = true
-
-	Pong.P2.Hold = false
-	u8 movement.P2 = 2
-	if (Game.Mode == Game.Mode_AI)
-	{
-		movement.P2 = AI.speed
-		if ((abs(Pong.P2.Y - Ball.Y) > AI.useSpeedTime) && (AI.useSpeed))
-			movement.P2 += 3
-
-		if (AI.useHold)
-			if (!Ball.Hold)
-				if (AI.useHoldWaitInGame == 0)
-					if (utilPong.getRandom() % 99 <= AI.useHoldChance)
-					{
-						AI.useHoldWaitInGame = AI.useHoldWait
-						Pong.P2.Hold = true
-					}
-		if (AI.useHoldWaitInGame > 0)
-		{
-			--AI.useHoldWaitInGame
-			if (AI.useHoldWaitInGame > 0)
-				Pong.P2.Hold = true
-			else
-				Pong.P2.Hold = false
-		}
-	}
-	else if (control.pad2.state & Game.ButtonTurbo)
-		movement.P2 += 3
-	if (control.pad2.state & Game.ButtonHold)
-		Pong.P2.Hold = true
-
-	// hold still
-	if ((Pong.P1.Hold) && (Ball.Hold) && (!Ball.X.Dir))
-		movement.P1 -= 1
-	else if ((Pong.P1.Hold) && (Ball.Hold) && (Ball.X.Dir))
-		movement.P2 -= 1
-
-	// Handle vertical position by checking states.
-	if (control.pad1.state & CONTROL_UP)
-		Pong.P1.Y -= movement.P1
-	else if (control.pad1.state & CONTROL_DOWN)
-		Pong.P1.Y += movement.P1
-
-	if (Game.Mode == Game.Mode_AI)
-	{
-		if (AI.reactionTimeInGame > 0)
-			AI.reactionTimeInGame--
-		else if ((AI.returnCenter) && (!Ball.X.Dir))
-		{
-			if (Pong.P2.Y > getScreenHeight() / 2 + 5)
-				Pong.P2.Y -= movement.P2
-			else if (Pong.P2.Y < getScreenHeight() / 2 - 5)
-				Pong.P2.Y += movement.P2
-		}
-		else if (((abs(Pong.P2.Y - Ball.Y) > AI.closenessValue) || (Ball.Xspeed + Ball.Yspeed > AI.closenessValueMaxSpeed)) && (Ball.X.Dir))
-		{
-			if (Pong.P2.Y - Ball.Y > 0 + returnYSpeed())
-				Pong.P2.Y -= movement.P2
-			else
-				Pong.P2.Y += movement.P2
-		}
-	}
-	else
-	{
-		if (control.pad2.state & CONTROL_UP)
-			Pong.P2.Y -= movement.P2
-		else if (control.pad2.state & CONTROL_DOWN)
-			Pong.P2.Y += movement.P2
-	}
-
-	if (Pong.P1.Y < 12)
-		Pong.P1.Y = 12
-	else if (Pong.P1.Y > getScreenHeight() - 12)
-		Pong.P1.Y = getScreenHeight() - 12
-
-	if (Pong.P2.Y < 12)
-		Pong.P2.Y = 12
-	else if (Pong.P2.Y > getScreenHeight() - 12)
-		Pong.P2.Y = getScreenHeight() - 12
-
-	if (!Ball.Hold)
-	{
-		Ball.X += ((Ball.X.Dir) ? Ball.Xspeed : -Ball.Xspeed)
-		u8 ballHeight = GAMEPLAY_BALL_HEIGHT_VAL[Game.BallType]
-		if ((Ball.Y < ballHeight) || (Ball.Y > getScreenHeight() - ballHeight))
-		{
-			Ball.Y.Dir = ((Ball.Y.Dir) ? false : true)
-			Ball.Y = ((Ball.Y < ballHeight) ? ballHeight : getScreenHeight() - ballHeight)
-		}
-		Ball.Y += ((Ball.Y.Dir) ? -Ball.Yspeed : Ball.Yspeed)
-	}
-
-	bool shouldBounce = false
-
-	// 1st = left, 2nd = right
-
-	u8 leftMost = 19
-	u8 rightMost = GAMEPLAY_BALL_FURTHENMOST_VAL[Game.BallType]
-	//writeDisplay(rightMost)
-
-	bool play1Bounce = ((Ball.X >= leftMost) && (Ball.X <= rightMost) && (!Ball.X.Dir))
-	bool play2Bounce = (((Ball.X <= getScreenWidth() - leftMost) && (Ball.X >= getScreenWidth() - 26)) && (Ball.X.Dir))
-	if (Game.Mode == Game.Mode_AI)	// AI has a slighly smaller hitbox to make the higher difficulties easier.
-		play2Bounce = (((Ball.X <= getScreenWidth() - (leftMost + 1)) && (Ball.X >= getScreenWidth() - rightMost)) && (Ball.X.Dir))
-	else if (Game.Mode == Game.Mode_ENDLESS) // Endless is pushed back more.
-		play2Bounce = ((Ball.X >= getScreenWidth() - rightMost + 16) && (Ball.X.Dir))
-	if (play1Bounce)
-	{
-		if (abs(Ball.Y - Pong.P1.Y) < GAMEPLAY_BALL_VERT_VAL[Game.BallType])
-		{
-			shouldBounce = true
-			if ((!Ball.Hold) && (Game.Holds))
-				if (Pong.P1.Hold)
-				{
-					Ball.Hold = true
-					playSound(0x76)
-
-					Stat.Increment("Pong.hStat")
-				}
-		}
-	}
-	else if (play2Bounce)
-	{
-		if ((abs(Ball.Y - Pong.P2.Y) < GAMEPLAY_BALL_VERT_VAL[Game.BallType]) || (Game.Mode == Game.Mode_ENDLESS))
-		{
-			shouldBounce = true
-			if ((!Ball.Hold) && (Game.Holds))
-				if (Pong.P2.Hold)
-				{
-					Ball.Hold = true
-					playSound(PONG_HOLD)
-
-					if (!Game.Mode == Game.Mode_AI)
-						Stat.Increment("Pong.hStat")
-				}
-		}
-	}
-
-	if (shouldBounce)
-	{
-		if (Ball.Hold)
-		{
-			--Ball.HoldTimer
-			bool heldByP1 = ((!Ball.X.Dir) ? true : false)
-
-			Ball.Y = ((heldByP1) ? Pong.P1.Y : Pong.P2.Y)
-			bool shouldRelease = ((((heldByP1) && (!Pong.P1.Hold)) ? true : ((!heldByP1) && (!Pong.P2.Hold)) ? true : false) || (Ball.HoldTimer == 0))
-			if (shouldRelease)
-			{
-				playSound(PONG_BOING)
-
-				u8 heldValue = control.pad2.state
-				if (heldByP1)
-					heldValue = control.pad1.state
-				else if (Game.Mode == Game.Mode_AI)
-				{
-					u8 aiThrowTargetValue = utilPong.getRandom() % 3
-					heldValue = ((aiThrowTargetValue == 0) ? CONTROL_UP : (aiThrowTargetValue == 1) ? CONTROL_DOWN : 0)
-				}
-				
-				if (Game.HoldInvert)
-				{
-					if (heldValue & CONTROL_UP)
-						heldValue = CONTROL_DOWN
-					else if (heldValue & CONTROL_DOWN)
-						heldValue = CONTROL_UP
-				}
-
-				if ((heldValue & CONTROL_UP) || (heldValue & CONTROL_DOWN))
-				{
-					Ball.Yspeed = (Ball.HoldTimer / 5 + Ball.Intensity / 4 - 1)
-					if ((Ball.Yspeed == 0) && (Ball.Intensity < 3))
-						Ball.Yspeed++
-					if (Ball.Yspeed > GAMEPLAY_BALL_VEL_PEN_VAL[Game.BallType])
-						Ball.Yspeed -= GAMEPLAY_BALL_VEL_PEN_VAL[Game.BallType]
-					Ball.Y.Dir = ((heldValue & CONTROL_DOWN) ? true : false)
-				}
-				else
-				{
-					// The power of { } single handily fixing a bug god damn it.
-					Ball.Yspeed = 0
-				}
-
-				Ball.Xspeed = min((Ball.Intensity / 5) + (Ball.HoldTimer / 4) - 1, 5)
-				if (Ball.Xspeed > GAMEPLAY_BALL_VEL_PEN_VAL[Game.BallType])
-					Ball.Xspeed -= GAMEPLAY_BALL_VEL_PEN_VAL[Game.BallType]
-				if (Ball.Xspeed < 2)
-					Ball.Xspeed = 2
-
-				Ball.X.Dir = ((Ball.X.Dir) ? false : true)
-
-				if (Ball.HoldTimer > 18)	// Ramp up the game more if the player released it within 2 frames.
-					Ball.Intensity++
-				Pong.BallBounce()
-			}
-		}
-		else
-		{
-			playSound(PONG_BOING)
-
-			Ball.Xspeed = min(utilPong.getRandom() % Ball.Intensity / 4 + 2, 5)
-			if (Ball.Xspeed > GAMEPLAY_BALL_VEL_PEN_VAL[Game.BallType])
-				Ball.Xspeed -= GAMEPLAY_BALL_VEL_PEN_VAL[Game.BallType]
-			if (Ball.Xspeed < 2)
-				Ball.Xspeed = 2
-			Ball.Yspeed = max(utilPong.getRandom() % Ball.Intensity / 5, Ball.Intensity / 3)
-			if ((Ball.Yspeed == 0) && (Ball.Intensity < 3))
-				Ball.Yspeed++
-			if (Ball.Yspeed > GAMEPLAY_BALL_VEL_PEN_VAL[Game.BallType])
-				Ball.Yspeed -= GAMEPLAY_BALL_VEL_PEN_VAL[Game.BallType]
-
-			Ball.X.Dir = ((Ball.X.Dir) ? false : true)
-
-			Ball.Y += ((Ball.Y.Dir) ? -Ball.Yspeed : Ball.Yspeed)
-
-			Pong.BallBounce()
-		}
-	}	
-
-	if (Ball.X > getScreenWidth())
-	{
-		playSound(0xb4)
+		// P2
 		if (Game.Mode == Game.Mode_ENDLESS)
-			Ball.Intensity = 1 // Reset intensity on Endless to stimulate a fresh game each miss.
+			Renderer.drawCustomSprite("the_wall", getScreenWidth() - 3, getScreenHeight() / 2, 0x00, 0, 0xe000)
 		else
-			Ball.Intensity = max(Ball.Intensity / 2, 1)
-		Ball.Yspeed = utilPong.getRandom() % 2
-		Ball.Xspeed = 2
-		Ball.X = getScreenWidth() / 2 + ((Ball.X.Dir) ? -100 : 100)
-		Ball.Y = getScreenHeight() / 2
+			Renderer.drawCustomSprite("pong_rod", getScreenWidth() - 20, Pong.P2.Y, 0x00, 0, 0xe000)
 
-		if (Ball.X.Dir)
-			++Pong.P1.Wins
-		else
-			++Pong.P2.Wins
+		// Ball
+		Renderer.drawCustomSprite(stringformat("pong_ball%s", GAMEPLAY_BALL_EXTENSION_STRING[Game.BallType]), Ball.X, Ball.Y, 0x00, 0, 0xe000)
 
-		Gameplay.TrackHits = 0
-	}
-	
-	if (((Pong.P1.Wins >= Game.WinsRequired) || (Pong.P2.Wins >= Game.WinsRequired)) && (Game.Mode != Game.Mode_ENDLESS))
-	{
-		playMusic(0x2d)
-		u8 sound = 0xb0
-		if (Game.Mode == Game.Mode_AI)
-			if (Pong.P2.Wins >= Game.WinsRequired)
-				sound = 0x35
-			else
-			{
-				Stat.Increment("Pong.aiWinStat")
-				if (AI.difficulty > Stat.getStat("Pong.aiStat"))
-					Stat.Set("Pong.aiStat", AI.difficulty)
-			}
-
-		playSound(sound)
-		Game.State = Game.State_Menu
-	}
-}
-
-function void Stat.Increment(string statToInc)
-{
-	bool incrementBstat = true
-	if ((Game.Mode == Game.Mode_AI) && (!Ball.X.Dir))
-		if (statToInc == "Pong.bStat")
-		incrementBstat = false
-	if (incrementBstat)
-	{
-		u32 stat = Stat.getStat(statToInc)
-		System.savePersistentData(0x00000000, statToInc, stat + 1)
-		// writeDisplay(stat)
-	}
-}
-
-function u64 Stat.getStat(string statToGet)
-{
-	return System.loadPersistentData(0x00000000, statToGet, 0xffffffff)
-}
-
-function void Stat.Set(string statToSet, u8 statNum)
-{
-	System.savePersistentData(0x00000000, statToSet, statNum)
-}
-
-function void Pong.BallBounce()
-{
-	AI.reactionTimeInGame = AI.reactionTime + (utilPong.getRandom() % 2)
-
-	Ball.Hold = false
-	Ball.HoldTimer = 21
-	++Ball.Intensity
-	if (Ball.Intensity > 40)
-		Ball.Intensity = 40
-	Gameplay.bgGlow = 10
-
-	Stat.Increment("Pong.bStat")
-
-	if ((Game.Mode == Game.Mode_ENDLESS) && (!Ball.X.Dir))
-		return
-
-	Gameplay.TrackHits++
-	Gameplay.TrackHitsTotal++
-
-	if (Game.Mode == Game.Mode_ENDLESS)
-	{
-		if (Gameplay.TrackHits > Stat.getStat("Pong.elesHighStat"))
+		if ((Ball.Hold) && (Game.Holds))
 		{
-			// Make it that much more exciting.
-			Gameplay.bgGlow += 10
-
-			Stat.Set("Pong.elesHighStat", Gameplay.TrackHits)
+			bool secondPlayer = (Ball.X > getScreenWidth() / 2)
+			if (!Game.Lite)
+			{
+				Renderer.drawCustomSprite("pong_hold_bar", ((secondPlayer) ? getScreenWidth() - 40 : 40), ((secondPlayer) ? Pong.P2.Y : Pong.P1.Y), 0x00, 0, 0xf000)
+				Renderer.pong.drawBoostBar(secondPlayer)
+			}
 		}
 	}
 }
@@ -639,6 +121,8 @@ function void Pong.BallBounce()
 function void Pong.resetVariables()
 {
 	// Reset variables for fresh game.
+	AI.grandMaster = false
+
 	Ball.Hold = false
 	Ball.HoldTimer = 21
 	Ball.Intensity = 1
@@ -648,6 +132,9 @@ function void Pong.resetVariables()
 	Ball.Yspeed = 0
 	Ball.X.Dir = false
 	Ball.Y.Dir = utilPong.getRandom() % 2
+
+	Gameplay.TrackHits = 0
+	Gameplay.TrackHitsTotal = 0
 	
 	Pong.P1.Wins = 0
 	Pong.P2.Wins = 0

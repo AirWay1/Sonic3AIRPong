@@ -1,5 +1,122 @@
+/*
+	Stat Functions
+*/
+
+// By the way, settings also use the stat functions lol. Guess you can call it more of a 'save' class of functions.
+
+function u64 Stat.getStat(string statToGet)
+{
+	return System.loadPersistentData(0x00000000, statToGet, 0xffffffff)
+}
+
+function bool Stat.hasStat(string statToCheck)
+{
+	u32 stat = System.loadPersistentData(0x00000000, statToCheck, 0xffffffff)
+	if (stat > 0)
+		return true
+	return false
+}
+
+function void Stat.Increment(string statToInc)
+{
+	bool incrementBstat = true
+	if ((Game.Mode == Game.Mode_AI) && (!Ball.X.Dir))
+		if (statToInc == "Pong.bStat")
+		incrementBstat = false
+	if (incrementBstat)
+	{
+		u32 stat = Stat.getStat(statToInc)
+		System.savePersistentData(0x00000000, statToInc, stat + 1)
+	}
+}
+
+function void Stat.Set(string statToSet, u64 statNum)
+{
+	System.savePersistentData(0x00000000, statToSet, statNum)
+}
+
+/*
+	Utility Pong Functions
+*/
+
+function s16 utilPong.rodReset(s16 pos)
+{
+	if (pos < 12)
+		return 12
+	else if (pos > getScreenHeight() - 12)
+		return getScreenHeight() - 12
+
+	return pos
+}
+
 function u32 utilPong.getRandom()
 {
 	// random but not random lol
 	return level.framecounter + control.pad1.state + control.pad2.state + Pong.P1.Y + Pong.P2.Y + Ball.X + Ball.Y + Ball.Xspeed + Ball.Yspeed
+}
+
+function s16 utilPong.ballXSpeedCalc(bool useRandCode)
+{
+	s16 xSpeed = Ball.Xspeed
+	if (useRandCode)
+		xSpeed = min(utilPong.getRandom() % 2 + Ball.Intensity / 4, 10)
+	else
+		xSpeed = min((Ball.Intensity / 5) + (Ball.HoldTimer / 4) - 1, 10)
+
+	// Ball penalties
+	if (xSpeed > GAMEPLAY_BALL_VEL_PEN_VAL[Game.BallType])
+		xSpeed -= GAMEPLAY_BALL_VEL_PEN_VAL[Game.BallType]
+
+	// Enforce Minimum ball speed.
+	if (xSpeed < 2)
+		xSpeed = 2
+
+	Ball.X.Dir = !Ball.X.Dir
+	return xSpeed
+}
+
+function s16 utilPong.ballYSpeedCalc(bool useRandCode)
+{
+	s16 ySpeed = Ball.Yspeed
+	if (useRandCode)
+		ySpeed = max(utilPong.getRandom() % Ball.Intensity / 5, Ball.Intensity / 3)
+	else
+		ySpeed = (Ball.HoldTimer / 5 + Ball.Intensity / 4 - 1)
+
+	// Ball penalties
+	if (ySpeed > GAMEPLAY_BALL_VEL_PEN_VAL[Game.BallType])
+		ySpeed -= GAMEPLAY_BALL_VEL_PEN_VAL[Game.BallType]
+
+	// No going to negatives.
+	if (ySpeed < 0)
+		ySpeed = 0
+
+	// On low intensities, increase speed by 1 to avoid boring early-game.
+	if ((ySpeed <= 1) && (Ball.Intensity < 4))
+		ySpeed++
+
+	return ySpeed
+}
+
+function bool utilPong.playerBounce2(u8 leftMost, u8 rightMost)
+{
+	if (Game.Mode == Game.Mode_AI)	// AI has a slighly smaller hitbox to make the higher difficulties easier.
+		return (((Ball.X <= getScreenWidth() - (leftMost + 1)) && (Ball.X >= getScreenWidth() - rightMost)))
+	else if (Game.Mode == Game.Mode_ENDLESS) // Endless is pushed back more.
+		return ((Ball.X >= getScreenWidth() - rightMost + 16))
+	return ((Ball.X <= getScreenWidth() - (leftMost + 1)) && (Ball.X >= getScreenWidth() - rightMost))
+}
+
+/*
+	Other Functions
+*/
+
+function s16 returnXSpeed()
+{
+	return ((Ball.X.Dir) ? Ball.Xspeed : -Ball.Xspeed)
+}
+
+function s16 returnYSpeed()
+{
+	return ((Ball.Y.Dir) ? -Ball.Yspeed : Ball.Yspeed)
 }

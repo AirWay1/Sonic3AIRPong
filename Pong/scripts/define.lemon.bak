@@ -7,12 +7,15 @@ global u8 menuScreen = 0
 // Game Class
 global u8		Game.BallType
 global bool		Game.Holds				= true
+global bool		Game.Lite
 global u8		Game.MenuSelect
 global u8		Game.Mode
 global bool		Game.Paused
 global u8		Game.SettingMenu
 global bool		Game.SettingMenuLock
+global u8		Game.Skin
 global u8		Game.State
+global u8		Game.StatsMenu
 global u8		Game.WinsRequired		= 3
 
 global u8		Game.ButtonTurbo		= 0x40
@@ -23,9 +26,10 @@ global u8		Game.SquidGameSecret	= false // hi jack
 
 constant u8		Game.State_Menu			= 0x00
 constant u8		Game.State_Settings		= 0x01
-constant u8		Game.State_StatsCredits	= 0x02
+constant u8		Game.State_Stats		= 0x02
 constant u8		Game.State_Achievements	= 0x03
-constant u8		Game.State_Game			= 0x04
+constant u8		Game.State_Credits		= 0x04
+constant u8		Game.State_Game			= 0x05
 
 constant u8		Game.Mode_2P			= 0x00
 constant u8		Game.Mode_AI			= 0x01
@@ -34,13 +38,25 @@ constant u8		Game.Mode_ENDLESS		= 0x02
 constant array<string> SETTINGS_STRING =
 {
 	// Settings
-	"Gameplay", "Modifiers", "Controls"
+	"Gameplay", "Modifiers", "Controls", "Appearance", "Misc."
 }
 
 constant array<string> GAMEMODE_SELECT_STRING =
 {
 	// Gamemodes
 	"Vs. 2P", "Vs. AI", "Endless"
+}
+
+constant array<string> BG_SELECT_STRING =
+{
+	// Appearance Names
+	"Default", "Squid Games"
+}
+
+constant array<string> SKIN_SELECT_STRING =
+{
+	// Appearance Names
+	"Default", "Neon", "Ping Pong"
 }
 
 function string returnControlString(u8 control)
@@ -65,10 +81,29 @@ function string returnControlString(u8 control)
 	return ""
 }
 
+constant array<string> STAT_ACHIEVEMENT_TITLE_STRING =
+{
+	// Settings
+	"A.I. Champion", "Endless Determination", "Ball Bouncer"
+}
+
+constant array<string> STAT_ACHIEVEMENT_TEXT_STRING =
+{
+	// Settings
+	"In Vs AI., beat ai difficulty 10.", "In Endless, get a Highscore of 15 score.", "Get 1000+ Ball Hits"
+}
+
+constant array<string> STAT_ACHIEVEMENT_UNLOCK_STRING =
+{
+	// Settings
+	"Squid Game BG", "Neon Skin", "Ping Pong Skin"
+}
+
+
 // Gameplay Class
 global u8		Gameplay.bgGlow
-global u16		Gameplay.TrackHits
-global u16		Gameplay.TrackHitsTotal
+global u32		Gameplay.TrackHits
+global u32		Gameplay.TrackHitsTotal
 
 constant array<string> GAMEPLAY_BALL_SELECT_STRING =
 {
@@ -82,16 +117,23 @@ constant array<string> GAMEPLAY_BALL_EXTENSION_STRING =
 	"", "_iron", "_omega"
 }
 
+constant array<string> GAMEPLAY_SKIN_EXTENSION_STRING =
+{
+	// Balls
+	"", "_neon", "_pp"
+}
+
+
 constant array<u8> GAMEPLAY_BALL_HEIGHT_VAL =
 {
 	// Balls
-	5, 10, 66
+	5, 10, 70
 }
 
 constant array<u8> GAMEPLAY_BALL_VERT_VAL =
 {
 	// Balls
-	17, 18, 55
+	17, 18, 65
 }
 
 constant array<u8> GAMEPLAY_BALL_FURTHENMOST_VAL =
@@ -145,4 +187,5 @@ global u8		AI.useSpeedTime
 // Sound Class
 constant u8		PONG_HOLD				= 0x76
 constant u8		PONG_BOING				= 0xAA
+constant u8		PONG_CANCEL				= 0xAD
 constant u8		PONG_PAUSE				= 0xB5

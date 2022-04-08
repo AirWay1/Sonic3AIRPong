@@ -1,5 +1,4 @@
-// Where most of the magic happens. Dreams do indeed come true!
-function void customMenu.update()
+function void pongMenu.update()
 {
 	Ball.X = getScreenWidth() / 2
 	Ball.Y = getScreenHeight() / 2
@@ -7,11 +6,12 @@ function void customMenu.update()
 	Pong.P1.Y = getScreenHeight() / 2
 	Pong.P2.Y = getScreenHeight() / 2
 
+	pongMenu.getSettings()
+
 	playMusic(0x2d)
 	FadeOutScreenBlocking()
 	while (true)
 	{
-		// Some stuff I don't know about, do not delete.
 		FadeInFromWhite()
 
 		waitForNextFrame()
@@ -24,24 +24,14 @@ function void customMenu.update()
 		DataSelect.drawCustomPlanes()
 
 		++level.framecounter
-		// ---------------
-		// Recommended to leave the code above alone unless you have a good reason to do so.
-		// ---------------
 
-		// To keep code clean, I'm putting all logic in here. Do however you want though!
 		Pong.mainLogicLoop()
-
-		// These two if condtions allow exiting to differnt locations.
-		// It is recommended to put one of these somewhere in your scripts so players do not get soft-locked.
-		
-		/*
-			By the way, there are more premade load calls available for usage. See scripts/loadCall.lemon for more details.
-		*/
 
 		// Discord RPC
 		{
 			if (Game.State == Game.State_Game)
 			{
+				// Gameplay Status
 				if (Game.Mode == Game.Mode_ENDLESS)
 					Game.setDiscordDetails(stringformat("Endless - %d Hits", Gameplay.TrackHits))
 				else
@@ -50,12 +40,72 @@ function void customMenu.update()
 			}
 			else
 			{
+				// Menu Status
 				Game.setDiscordDetails("In the Menus")
 				Game.setDiscordLargeImage("menus")
 			}
 
+			// Playing Pong
 			Game.setDiscordState("Playing Sonic 3 A.I.R. Pong")
 			Game.setDiscordSmallImage("character_unknown")
 		}
 	}
 }
+
+function void pongMenu.getSettings()
+{
+	Game.Mode = Stat.getStat("Pong.gameModeSetting")
+	if (Stat.hasStat("Pong.aiDifficultySetting"))
+		AI.difficulty = Stat.getStat("Pong.aiDifficultySetting")
+	Game.Lite = Stat.getStat("Pong.liteSetting")
+
+	Game.BallType = Stat.getStat("Pong.ballTypeSetting")
+	Game.WinsRequired = Stat.getStat("Pong.winsRequiredSetting")
+	Game.Holds = Stat.getStat("Pong.holdsSetting")
+
+	Game.ButtonTurbo = Stat.getStat("Pong.buttonTurboSetting")
+	Game.ButtonHold = Stat.getStat("Pong.buttonHoldSetting")
+	Game.HoldInvert = Stat.getStat("Pong.holdInvertSetting")
+}
+
+function void pongMenu.resetSettings()
+{
+	Game.Mode = 0
+	AI.difficulty = 5
+
+	Game.BallType = 0
+	Game.WinsRequired = 3
+	Game.Holds = true
+	
+	Game.ButtonTurbo = 0x40
+	Game.ButtonHold = 0x40
+	Game.HoldInvert = false
+
+	Stat.Set("Pong.gameModeSetting", 0)
+	Stat.Set("Pong.aiDifficultySetting", 0)
+
+	Stat.Set("Pong.ballTypeSetting", 0)
+	Stat.Set("Pong.winsRequiredSetting", 3)
+	Stat.Set("Pong.holdsSetting", 1)
+
+	Stat.Set("Pong.buttonTurboSetting", 0x40)
+	Stat.Set("Pong.buttonHoldSetting", 0x40)
+	Stat.Set("Pong.holdInvertSetting", 0)
+}
+
+function void pongMenu.setSettings()
+{
+	Stat.Set("Pong.gameModeSetting", Game.Mode)
+	Stat.Set("Pong.aiDifficultySetting", AI.difficulty)
+	Stat.Set("Pong.liteSetting", Game.Lite)
+
+	Stat.Set("Pong.ballTypeSetting", Game.BallType)
+	Stat.Set("Pong.winsRequiredSetting", Game.WinsRequired)
+	Stat.Set("Pong.holdsSetting", Game.Holds)
+
+	Stat.Set("Pong.buttonTurboSetting", Game.ButtonTurbo)
+	Stat.Set("Pong.buttonHoldSetting", Game.ButtonHold)
+	Stat.Set("Pong.holdInvertSetting", Game.HoldInvert)
+}
+
+// Aistarn was here.
